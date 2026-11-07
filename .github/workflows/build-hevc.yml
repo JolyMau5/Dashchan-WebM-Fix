@@ -52,23 +52,31 @@ jobs:
         with:
           gradle-version: '6.9.4'
 
+      - name: Restore signing keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$KEYSTORE_BASE64"
+          echo "$KEYSTORE_BASE64" | base64 -d > keystore.jks
+          printf 'store.file=keystore.jks\nstore.password=%s\nkey.alias=%s\nkey.password=%s\n' \
+            "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > keystore.properties
+          test -s keystore.jks
+          test -s keystore.properties
+
       - name: Build release APK
         run: gradle assembleRelease --no-daemon --stacktrace
 
-      - name: Sign APK with debug key
+      - name: Collect and verify signed APK
         run: |
           set -euo pipefail
           APK="$(find build/outputs/apk/release -maxdepth 1 -name '*.apk' ! -name '*-signed.apk' | head -n1)"
           test -n "$APK"
-          keytool -genkeypair -v \
-            -keystore debug.keystore \
-            -storepass android -keypass android \
-            -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
+          cp "$APK" build/outputs/apk/release/DashchanWebm-hevc-signed.apk
           BUILD_TOOLS="$ANDROID_SDK_ROOT/build-tools/30.0.2"
-          "$BUILD_TOOLS/apksigner" sign \
-            --ks debug.keystore --ks-pass pass:android --key-pass pass:android \
-            --out build/outputs/apk/release/DashchanWebm-hevc-signed.apk "$APK"
           "$BUILD_TOOLS/apksigner" verify --verbose --print-certs \
             build/outputs/apk/release/DashchanWebm-hevc-signed.apk
 
