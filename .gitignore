@@ -1,4 +1,7 @@
 /*
+!/.github
+!/.github/workflows
+!/.github/workflows/build-hevc.yml
 !/res
 !/.gitignore
 !/AndroidManifest.xml

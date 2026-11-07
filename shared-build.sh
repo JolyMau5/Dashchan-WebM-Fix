@@ -66,6 +66,8 @@ ffmpeg_options=(
 	'--enable-libdav1d'
 	'--enable-decoder=libdav1d'
 	'--enable-decoder=h264'
+	'--enable-decoder=hevc'
+	'--enable-parser=hevc'
 	'--enable-decoder=vorbis'
 	'--enable-decoder=opus'
 	'--enable-decoder=aac'
